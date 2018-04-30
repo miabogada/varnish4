@@ -18,11 +18,43 @@ backend default {
     .port = "8080";
 }
 
+acl whitelist {
+        "127.0.0.1";
+        "localhost";
+        "71.84.86.140";
+}
+
 sub vcl_recv {
     # Happens before we check if we have this in cache already.
     #
     # Typically you clean up the request here, removing cookies you don't need,
     # rewriting the request, etc.
+
+	set req.http.cookie = regsuball(req.http.cookie, "wp-settings-\d+=[^;]+(; )?", "");
+	set req.http.cookie = regsuball(req.http.cookie, "wp-settings-time-\d+=[^;]+(; )?", "");
+	set req.http.cookie = regsuball(req.http.cookie, "wordpress_test_cookie=[^;]+(; )?", "");
+	if (req.http.cookie == "") {
+		unset req.http.cookie;
+	}
+
+//	if (req.method == "PURGE") {
+//		if (req.http.X-Purge-Method == "regex") {
+//			ban("req.url ~ " + req.url + " &amp;&amp; req.http.host ~ " + req.http.host);
+//			return (synth(200, "Banned."));
+//		} else {
+//			return (purge);
+//		}
+//	}
+
+	# exclude wordpress url
+	if (req.url ~ "wp-admin|wp-login|php") {
+		if (client.ip ~ whitelist) {
+			return (pass);
+		} else {
+			return (synth(405));
+		}
+	}
+
 }
 
 sub vcl_backend_response {
