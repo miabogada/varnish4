@@ -1,0 +1,17 @@
+$ nano /etc/apache2/ports.conf
+Listen 127.0.0.1:8080
+
+// modify apache virtual hosts using webmin or sites-enabled
+<VirtualHost *:8080>
+</VirtualHost>
+
+$ systemctl restart apache2.service
+
+$ nano /etc/systemd/system/varnish.service
+[Service]
+ExecStart=/usr/sbin/varnishd -j unix,user=vcache -F -a :80 -T localhost:6082 -f /etc/varnish/default.vcl -S /etc/varnish/secret -s malloc,256m
+
+$ systemctl daemon-reload
+
+$ systemctl restart varnish
+
