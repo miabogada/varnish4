@@ -11,7 +11,6 @@
 # Marker to tell the VCL compiler that this VCL has been adapted to the
 # new 4.0 format.
 vcl 4.0;
-import std;
 
 # Default backend definition. Set this to point to your content server.
 backend default {
@@ -19,45 +18,17 @@ backend default {
     .port = "8080";
 }
 
-backend tc {
-	.host = "127.0.0.1";
-	.port = "8081";
-}
-
 acl whitelist {
         "127.0.0.1";
         "localhost";
-        "137.25.125.58";
-	"137.25.6.79";
-	"209.210.68.4";
+        "71.84.86.140";
 }
-
-acl blacklist {
-        "195.154.242.0"/24;
-        "195.154.222.0"/24;
-        "62.210.0.0"/16;
-}
-
 
 sub vcl_recv {
     # Happens before we check if we have this in cache already.
     #
     # Typically you clean up the request here, removing cookies you don't need,
     # rewriting the request, etc.
-
-        if (client.ip ~ blacklist) {
-                return(synth(403, "Access denied"));
-        }
-
-	if (std.ip(regsub(req.http.X-Forwarded-For, ", 70.132.16.89$", ""), "0.0.0.0") ~ blacklist) {
-                return(synth(403, "Access denied"));
-        }
-
-	if (req.http.host ~ "tclarknutrition.com") {
-		set req.backend_hint = tc;
-	} else {
-		set req.backend_hint = default;
-	}
 
 	set req.http.cookie = regsuball(req.http.cookie, "wp-settings-\d+=[^;]+(; )?", "");
 	set req.http.cookie = regsuball(req.http.cookie, "wp-settings-time-\d+=[^;]+(; )?", "");
@@ -76,7 +47,7 @@ sub vcl_recv {
 //	}
 
 	# exclude wordpress url
-	if (req.url ~ "wp-admin|wp-login|xmlrpc") {
+	if (req.url ~ "wp-admin|wp-login|php") {
 		if (client.ip ~ whitelist) {
 			return (pass);
 		} else {
