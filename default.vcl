@@ -33,9 +33,11 @@ acl whitelist {
 }
 
 acl blacklist {
-        "195.154.242.0"/24;
-        "195.154.222.0"/24;
-        "62.210.0.0"/16;
+        "195.154.242.0"/24;	#eu comment spam
+        "195.154.222.0"/24;	#eu comment spam
+        "62.210.0.0"/16;	#eu comment spam	
+	"193.106.0.0"/16;	#russia script upload
+	"5.188.210.0"/24;	#russia comment spam
 }
 
 
@@ -46,11 +48,12 @@ sub vcl_recv {
     # rewriting the request, etc.
 
         if (client.ip ~ blacklist) {
-                return(synth(403, "Access denied"));
+                return(synth(403, "Nope."));
         }
 
-	if (std.ip(regsub(req.http.X-Forwarded-For, ", 70.132.16.89$", ""), "0.0.0.0") ~ blacklist) {
-                return(synth(403, "Access denied"));
+#        if (std.ip(regsub(req.http.X-Forwarded-For, ", 70\.132\.16\.89$", ""), "0.0.0.0") ~ blacklist) {
+	 if (std.ip(regsub(req.http.X-Forwarded-For, "[, ].*$", ""), "0.0.0.0") ~ blacklist) {
+                return(synth(403, "Have a nice day ;)"));
         }
 
 	if (req.http.host ~ "tclarknutrition.com") {
@@ -83,6 +86,17 @@ sub vcl_recv {
 			return (synth(405));
 		}
 	}
+
+	# protect uploads
+	if (req.method == "POST") {
+	        if (req.url ~ "wp-admin|wp-login|xmlrpc|uploads") {
+		        if (client.ip ~ whitelist) {
+			        return (pass);
+			} else {
+				return (synth(403, "No soup for you."));
+			}
+		}
+	}	
 
 }
 
