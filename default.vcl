@@ -27,9 +27,9 @@ backend tc {
 acl whitelist {
         "127.0.0.1";
         "localhost";
-        "137.25.125.58";
-	"137.25.6.79";
-	"209.210.68.4";
+        "66.215.152.158";	#home
+	"137.25.6.79";		#lmc office
+	"209.210.68.4";		#iolo
 }
 
 acl blacklist {
