@@ -30,6 +30,8 @@ acl whitelist {
         "66.215.152.158";	#home
 	"137.25.6.79";		#lmc office
 	"209.210.68.4";		#iolo
+	"73.24.6.28";		#joey apt
+	"73.242.37.242";	#stpaul temp
 }
 
 acl blacklist {
@@ -58,8 +60,14 @@ sub vcl_recv {
 
 	if (req.http.host ~ "tclarknutrition.com") {
 		set req.backend_hint = tc;
+                if (req.http.host ~ "^tclarknutrition.com") {
+                        return (synth (750));
+                }
 	} else {
 		set req.backend_hint = default;
+	        if (req.http.host ~ "^miabogada.com") {
+			return (synth (750));
+		}
 	}
 
 	set req.http.cookie = regsuball(req.http.cookie, "wp-settings-\d+=[^;]+(; )?", "");
@@ -79,7 +87,7 @@ sub vcl_recv {
 //	}
 
 	# exclude wordpress url
-	if (req.url ~ "wp-admin|wp-login|xmlrpc") {
+	if (req.url ~ "wp-admin|wp-login|xmlrpc|wp-db|\.git$") {
 		if (client.ip ~ whitelist) {
 			return (pass);
 		} else {
@@ -112,4 +120,13 @@ sub vcl_deliver {
     # response to the client.
     #
     # You can do accounting or modifying the final object here.
+}
+
+sub vcl_synth {
+    if (resp.status == 750) {
+        set resp.status = 301;
+        set resp.http.Location = "https://www." +req.http.host + req.url;
+	set resp.reason = "Moved";
+        return(deliver);
+    }
 }
