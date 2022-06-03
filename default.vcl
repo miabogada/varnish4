@@ -70,12 +70,80 @@ sub vcl_recv {
 		}
 	}
 
-	set req.http.cookie = regsuball(req.http.cookie, "wp-settings-\d+=[^;]+(; )?", "");
-	set req.http.cookie = regsuball(req.http.cookie, "wp-settings-time-\d+=[^;]+(; )?", "");
-	set req.http.cookie = regsuball(req.http.cookie, "wordpress_test_cookie=[^;]+(; )?", "");
-	if (req.http.cookie == "") {
-		unset req.http.cookie;
+
+    # Mark static files with the X-Static-File header, and remove any cookies
+    # X-Static-File is also used in vcl_backend_response to identify static files
+    if (req.url ~ "^[^?]*\.(7z|avi|bmp|bz2|css|csv|doc|docx|eot|flac|flv|gif|gz|ico|jpeg|jpg|js|less|mka|mkv|mov|mp3|mp4|mpeg|mpg|odt|ogg|ogm|opus|otf|pdf|png|ppt|pptx|rar|rtf|svg|svgz|swf|tar|tbz|tgz|ttf|txt|txz|wav|webm|webp|woff|woff2|xls|xlsx|xml|xz|zip)(\?.*)?$") {
+        set req.http.X-Static-File = "true";
+        unset req.http.Cookie;
+        return(hash);
+    }
+
+
+    # No caching of special URLs, logged in users and some plugins
+    if (
+        req.http.Cookie ~ "wordpress_(?!test_)[a-zA-Z0-9_]+|wp-postpass|comment_author_[a-zA-Z0-9_]+|woocommerce_cart_hash|woocommerce_items_in_cart|wp_woocommerce_session_[a-zA-Z0-9]+|wordpress_logged_in_|comment_author|PHPSESSID" ||
+        req.http.Authorization ||
+        req.url ~ "add_to_cart" ||
+        req.url ~ "edd_action" ||
+        req.url ~ "nocache" ||
+        req.url ~ "^/addons" ||
+        req.url ~ "^/bb-admin" ||
+        req.url ~ "^/bb-login.php" ||
+        req.url ~ "^/bb-reset-password.php" ||
+        req.url ~ "^/cart" ||
+        req.url ~ "^/checkout" ||
+        req.url ~ "^/control.php" ||
+        req.url ~ "^/login" ||
+        req.url ~ "^/logout" ||
+        req.url ~ "^/lost-password" ||
+        req.url ~ "^/my-account" ||
+        req.url ~ "^/product" ||
+        req.url ~ "^/register" ||
+        req.url ~ "^/register.php" ||
+        req.url ~ "^/server-status" ||
+        req.url ~ "^/signin" ||
+        req.url ~ "^/signup" ||
+        req.url ~ "^/stats" ||
+        req.url ~ "^/wc-api" ||
+        req.url ~ "^/wp-admin" ||
+        req.url ~ "^/wp-comments-post.php" ||
+        req.url ~ "^/wp-cron.php" ||
+        req.url ~ "^/wp-login.php" ||
+        req.url ~ "^/wp-activate.php" ||
+        req.url ~ "^/wp-mail.php" ||
+        req.url ~ "^/wp-login.php" ||
+        req.url ~ "^\?add-to-cart=" ||
+        req.url ~ "^\?wc-api=" ||
+        req.url ~ "^/preview=" ||
+        req.url ~ "^/\.well-known/acme-challenge/"
+    ) {
+	     set req.http.X-Cacheable = "NO:Logged in/Got Sessions";
+	     if(req.http.X-Requested-With == "XMLHttpRequest") {
+		     set req.http.X-Cacheable = "NO:Ajax";
+	     }
+        return(pass);
+    }
+
+
+    if (req.http.Cookie) {
+    set req.http.Cookie = ";" + req.http.Cookie;
+    set req.http.Cookie = regsuball(req.http.Cookie, "; +", ";");
+    set req.http.Cookie = regsuball(req.http.Cookie, ";(wordpress_logged_in_[A-Za-z0-9]+)=", "; \1=");
+    set req.http.Cookie = regsuball(req.http.Cookie, ";[^ ][^;]*", "");
+    set req.http.Cookie = regsuball(req.http.Cookie, "^[; ]+|[; ]+$", "");
+    
+    if (req.http.Cookie ~ "^\s*$") {
+        unset req.http.cookie;
 	}
+    }
+
+//	set req.http.cookie = regsuball(req.http.cookie, "wp-settings-\d+=[^;]+(; )?", "");
+//	set req.http.cookie = regsuball(req.http.cookie, "wp-settings-time-\d+=[^;]+(; )?", "");
+//	set req.http.cookie = regsuball(req.http.cookie, "wordpress_test_cookie=[^;]+(; )?", "");
+//	if (req.http.cookie == "") {
+//		unset req.http.cookie;
+//	}
 
 //	if (req.method == "PURGE") {
 //		if (req.http.X-Purge-Method == "regex") {
