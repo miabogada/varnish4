@@ -30,6 +30,7 @@ acl whitelist {
         "66.215.152.158";	#home
 	"137.25.6.79";		#lmc office
 	"209.210.68.4";		#iolo
+	"208.90.186.227";	#iolo
 	"73.24.6.28";		#joey apt
 	"73.242.37.242";	#stpaul temp
 }
@@ -155,7 +156,7 @@ sub vcl_recv {
 //	}
 
 	# exclude wordpress url
-	if (req.url ~ "wp-admin|wp-login|xmlrpc|wp-db|\.git$") {
+	if (req.url ~ "wp-admin|wp-login|xmlrpc|wp-db|\.git") {
 		if (client.ip ~ whitelist) {
 			return (pass);
 		} else {
