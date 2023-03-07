@@ -27,12 +27,17 @@ backend tc {
 acl whitelist {
         "127.0.0.1";
         "localhost";
-        "66.215.152.158";	#home
+        "47.232.162.147";	#home
 	"137.25.6.79";		#lmc office
 	"209.210.68.4";		#iolo
 	"208.90.186.227";	#iolo
 	"73.24.6.28";		#joey apt
 	"73.242.37.242";	#stpaul temp
+        "84.67.102.133";        #pia
+        "202.47.38.9";          #design4conversion
+        "72.255.37.31";         #design4conversion
+        "37.111.180.226";       #design4conversion
+	"202.47.33.57";	#design4conversion Abbas
 }
 
 acl blacklist {
