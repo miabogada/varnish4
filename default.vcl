@@ -37,7 +37,7 @@ acl whitelist {
         "202.47.38.9";          #design4conversion
         "72.255.37.31";         #design4conversion
         "37.111.180.226";       #design4conversion
-	"202.47.33.57";	#design4conversion Abbas
+	"202.47.33.157";	#design4conversion Abbas
 }
 
 acl blacklist {
